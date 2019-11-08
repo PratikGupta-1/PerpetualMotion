@@ -31,7 +31,7 @@ from time import sleep
 import RPi.GPIO as GPIO 
 from pidev.stepper import stepper
 from pidev.Cyprus_Commands import Cyprus_Commands_RPi as cyprus
-
+from pidev.stepper import stepper
 
 # ////////////////////////////////////////////////////////////////
 # //                      GLOBAL VARIABLES                      //
