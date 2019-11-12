@@ -28,7 +28,7 @@ from kivy.core.window import Window
 from pidev.kivy import DPEAButton
 from pidev.kivy import PauseScreen
 from time import sleep
-import RPi.GPIO as GPIO 
+import RPi.GPIO as GPIO
 from pidev.stepper import stepper
 from pidev.Cyprus_Commands import Cyprus_Commands_RPi as cyprus
 from pidev.stepper import stepper
@@ -37,17 +37,22 @@ from pidev.stepper import stepper
 # //                      GLOBAL VARIABLES                      //
 # //                         CONSTANTS                          //
 # ////////////////////////////////////////////////////////////////
-ON = False
-OFF = True
-HOME = True
-TOP = False
-OPEN = False
-CLOSE = True
+STAIRCASEDONE = False  # staircase
+ON = False  # staircase
+OFF = True  # staircase
+HOME = True  # ramp
+TOP = False  # ramp
+GATEOPEN = False  # gate
+GATECLOSED = True  # gate
 YELLOW = .180, 0.188, 0.980, 1
 BLUE = 0.917, 0.796, 0.380, 1
 DEBOUNCE = 0.1
 INIT_RAMP_SPEED = 150
 RAMP_LENGTH = 725
+
+s0 = stepper(port=0, micro_steps=32, hold_current=20, run_current=20, accel_current=20, deaccel_current=20,
+             steps_per_unit=200, speed=8)
+cyprus.initialize()
 
 
 # ////////////////////////////////////////////////////////////////
@@ -59,8 +64,9 @@ class MyApp(App):
         self.title = "Perpetual Motion"
         return sm
 
+
 Builder.load_file('main.kv')
-Window.clearcolor = (.1, .1,.1, 1) # (WHITE)
+Window.clearcolor = (.1, .1, .1, 1)  # (WHITE)
 
 cyprus.open_spi()
 
@@ -68,13 +74,14 @@ cyprus.open_spi()
 # //                    SLUSH/HARDWARE SETUP                    //
 # ////////////////////////////////////////////////////////////////
 sm = ScreenManager()
-ramp = stepper(port = 0, speed = INIT_RAMP_SPEED)
+ramp = stepper(port=0, speed=INIT_RAMP_SPEED)
+
 
 # ////////////////////////////////////////////////////////////////
 # //                       MAIN FUNCTIONS                       //
 # //             SHOULD INTERACT DIRECTLY WITH HARDWARE         //
 # ////////////////////////////////////////////////////////////////
-	
+
 # ////////////////////////////////////////////////////////////////
 # //        DEFINE MAINSCREEN CLASS THAT KIVY RECOGNIZES        //
 # //                                                            //
@@ -95,24 +102,38 @@ class MainScreen(Screen):
         self.initialize()
 
     def toggleGate(self):
-        print("Open and Close gate here")
+
+        if TOP:
+            if STAIRCASEDONE:
+                print("Open and Close gate here")
+
+                GATEOPEN = True
 
     def toggleStaircase(self):
-        print("Turn on and off staircase here")
-        
+        if TOP:
+            print("Turn on and off staircase here")
+
     def toggleRamp(self):
         print("Move ramp up and down here")
-        
+        # ramp length is 28.3 (slightly less than 28.5)
+
     def auto(self):
         print("Run through one cycle of the perpetual motion machine")
-        
+
     def setRampSpeed(self, speed):
         print("Set the ramp speed and update slider text")
-        
+
+        s0.set_speed(1)
+
     def setStaircaseSpeed(self, speed):
         print("Set the staircase speed and update slider text")
-        
+
     def initialize(self):
+        cyprus.initialize()  # stop staircase
+        cyprus.setup_servo(2)  # setup gate servo
+        cyprus.set_servo_position(2, 0)  # close gate
+        s0.go_to_position(0)
+
         print("Close gate, stop staircase and home ramp here")
 
     def resetColors(self):
@@ -120,12 +141,13 @@ class MainScreen(Screen):
         self.ids.staircase.color = YELLOW
         self.ids.ramp.color = YELLOW
         self.ids.auto.color = BLUE
-    
+
     def quit(self):
         print("Exit")
         MyApp().stop()
 
-sm.add_widget(MainScreen(name = 'main'))
+
+sm.add_widget(MainScreen(name='main'))
 
 # ////////////////////////////////////////////////////////////////
 # //                          RUN APP                           //
