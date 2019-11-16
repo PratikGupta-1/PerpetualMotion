@@ -165,7 +165,7 @@ class MainScreen(Screen):
         # while x < 5:
         # self.toggleRamp()
         # self.toggleStaircase()
-        # self.toggleGate()
+         # self.toggleGate()
         # x = x+1
         while True:
             self.toggleRamp()
